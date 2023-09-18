@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
+    <style>
+        body {
+            background-color: #292c34;
+            display: flex;
+            height: 100vh;
+        }
+    </style>
+    <title>IBGE Data Viewer</title>
+</head>
+<body>
+
+    <div class="container mx-auto"> <!-- centralize the content of applicattion -->
+
+        <h1><span class="badge badge-danger">IBGE Data Viewer</span></h1>
+
+        <!-- Region Selection -->
+        <div>
+            <h2><span class="badge badge-info">Select a Region:</span></h2>
+            <select id="regionSelect" class="list-group">
+                <option value=""><a href="#" class="list-group-item list-group-item-action">-- Select Region --</a></option>
+                <option value="1"><a href="#" class="list-group-item list-group-item-action ">North</a></option>
+                <option value="2"><a href="#" class="list-group-item list-group-item-action ">Northeast</a></option>
+                <option value="3"><a href="#" class="list-group-item list-group-item-action ">Southeast</a></option>
+                <option value="4"><a href="#" class="list-group-item list-group-item-action ">Shouth</a></option>
+                <option value="5"><a href="#" class="list-group-item list-group-item-action ">Centralwest</a></option>
+            </select>
+        </div>
+
+        <!-- List of States in the Selected Region -->
+        <div>
+            <h2><span class="badge badge-info">States in the Selected Region:</span></h2>
+            <select id="stateSelect" class="list-group">
+                <option value=""><a href="#" class="list-group-item list-group-item-action">-- Select a State --</a></option>
+            </select>
+        </div>
+
+        <!-- List of Cities in the Selected State -->
+        <div>
+            <h2><span class="badge badge-info">Cities in the Selected State:</span></h2>
+            <ul id="cityList" style="color: rgba(218, 10, 45, 0.918);">
+                <li><small class="text-muted">Select a state above to view the cities.</small></li>
+            </ul>
+        </div>
+
+    </div>
+
+    <script>
+        const regionSelect = document.getElementById('regionSelect');
+        const stateSelect = document.getElementById('stateSelect');
+        const cityList = document.getElementById('cityList');
+
+        regionSelect.addEventListener('change', async () => {
+            const selectedRegion = regionSelect.value;
+
+            // Clear the list of states and cities
+            stateSelect.innerHTML = '<option value="">-- Select a State --</option>';
+            cityList.innerHTML = '';
+
+            if (selectedRegion) {
+                try {
+                    // Get the list of all states
+                    const statesResponse = await fetch(`https://brasilapi.com.br/api/ibge/uf/v1`);
+                    const statesData = await statesResponse.json();
+
+                    // Select the states according to the region
+                    const filteredStates = statesData.filter(state => state.regiao.id.toString() === selectedRegion);
+
+                    // Populate the list of states
+                    filteredStates.forEach(state => {
+                        const option = document.createElement('option');
+                        option.value = state.sigla;
+                        option.textContent = `${state.sigla} - ${state.nome}`;
+                        stateSelect.appendChild(option);
+                    });
+                } catch (error) {
+                    console.error("Error fetching states:", error);
+                }
+            }
+        });
+
+        stateSelect.addEventListener('change', async () => {
+            const selectedState = stateSelect.value;
+
+            // Clear the list of cities
+            cityList.innerHTML = '';
+
+            if (selectedState) {
+                try {
+                    // Get the list of cities in the selected state
+                    const citiesResponse = await fetch(`https://brasilapi.com.br/api/ibge/municipios/v1/${selectedState}?providers=dados-abertos-br,gov,wikipedia`);
+                    const citiesData = await citiesResponse.json();
+
+                    // Populate the list of cities
+                    citiesData.forEach(city => {
+                        const li = document.createElement('li');
+                        li.textContent = city.nome;
+                        cityList.appendChild(li);
+                    });
+                } catch (error) {
+                    console.error("Error fetching cities:", error);
+                }
+            }
+        });
+    </script>
+    <!-- Bootstrap JS imports -->
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy" crossorigin="anonymous"></script>
+</body>
+</html>
